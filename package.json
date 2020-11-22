@@ -17,7 +17,7 @@
     "core-js": "^3.6.5",
     "javascript-lp-solver": "^0.4.24",
     "js-base64": "^2.5.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "lodash.combinations": "^18.9.19",
     "md5": "^2.2.1",
     "mdui": "^0.4.3",
