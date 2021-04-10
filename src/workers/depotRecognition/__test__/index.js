@@ -1,9 +1,8 @@
 const { readdirSync, writeFileSync } = require('fs');
 const { resolve } = require('path');
 
-const SPEC_CONTENT = `import { parse } from 'path';
-import start from '../../index.jm';
-start(parse(__dirname).name);`;
+const SPEC_CONTENT = `import run from '../../index.jm';
+run(__dirname);`;
 
 const rp = rpath => resolve(__dirname, rpath);
 
