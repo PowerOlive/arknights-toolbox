@@ -1,4 +1,5 @@
-const { parse: parseURL } = require('url');
+const { resolve, parse } = require('path');
+const _ = require('lodash');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const ClosurePlugin = require('./plugins/ClosurePlugin');
 const PreventVercelBuildingPlugin = require('./plugins/PreventVercelBuildingPlugin');
@@ -45,32 +46,27 @@ const config = {
             chunks: 'all',
             enforce: true,
           },
-          data_common: {
-            test: /[\\/]src[\\/]data[\\/](item|level)\.json/,
-            name: 'data/common',
-            chunks: 'all',
-            enforce: true,
-          },
           data: {
-            test: /[\\/]src[\\/]data[\\/](?!(item|level)\.json).+\.json/,
-            name: 'data/data',
-            chunks: 'all',
-            minSize: 1,
-            maxSize: 2,
-            priority: 1,
-          },
-          i18n_common: {
-            test: /[\\/]src[\\/]locales[\\/][a-z]+[\\/](item|material|tag)\.json/,
-            name: 'i18n/common',
+            test: /[\\/]src[\\/]data[\\/].+\.json$/,
+            name(module, chunks, cacheGroupKey) {
+              let { name } = parse(module.identifier());
+              if (/^item(Order)?|level$/.test(name)) name = 'common';
+              return [cacheGroupKey, name].join('/');
+            },
             chunks: 'all',
             enforce: true,
           },
           i18n: {
-            test: /[\\/]src[\\/]locales[\\/][a-z]+[\\/](?!(item|material|tag)\.json).+\.json/,
-            name: 'i18n/i18n',
+            test: /[\\/]src[\\/]locales[\\/].+\.json$/,
+            name(module, chunks, cacheGroupKey) {
+              let { dir, name } = parse(module.identifier());
+              dir = _.last(dir.split(/[\\/]/));
+              if (/^item|material|tag$/.test(name)) name = 'common';
+              else if (name === '_') name = 'main';
+              return [cacheGroupKey, dir, name].join('/');
+            },
             chunks: 'all',
-            minSize: 1,
-            maxSize: 2,
+            enforce: true,
           },
         },
       },
@@ -88,6 +84,7 @@ const config = {
       'js-base64': 'Base64',
       'vue-gtag': 'VueGtag',
     },
+    resolve: { alias: {} },
   },
   chainWebpack: config => {
     config.plugins.delete('preload').delete('prefetch');
@@ -110,7 +107,7 @@ const config = {
       runtimeCaching: [
         runtimeCachingRule(/assets\/img\/(avatar|material|item)\//),
         runtimeCachingRuleByURL(
-          parseURL('https://avatars.githubusercontent.com'),
+          new URL('https://avatars.githubusercontent.com'),
           'StaleWhileRevalidate',
         ),
       ],
@@ -172,12 +169,19 @@ const config = {
   },
 };
 
+if (process.env.DR_DEV) {
+  config.configureWebpack.resolve.alias['@arkntools/depot-recognition'] = resolve(
+    __dirname,
+    process.env.DR_DEV,
+  );
+}
+
 const runtimeCachingURLs = [
   'https://i.loli.net',
   'https://fonts.googleapis.cnpmjs.org',
   'https://fonts.gstatic.cnpmjs.org',
   'https://cdn.jsdelivr.net',
-].map(url => parseURL(url));
+].map(url => new URL(url));
 
 if (process.env.NODE_ENV === 'production') {
   const { USE_CDN, VUE_APP_CDN } = process.env;
@@ -185,7 +189,7 @@ if (process.env.NODE_ENV === 'production') {
     if (!VUE_APP_CDN) throw new Error('VUE_APP_CDN env is not set');
     config.publicPath = VUE_APP_CDN;
     config.crossorigin = 'anonymous';
-    const CDN_URL = parseURL(VUE_APP_CDN);
+    const CDN_URL = new URL(VUE_APP_CDN);
     if (
       !runtimeCachingURLs.some(
         ({ protocol, host }) => protocol === CDN_URL.protocol && host === CDN_URL.host,
