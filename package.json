@@ -16,7 +16,7 @@
     "@johmun/vue-tags-input": "^2.1.0",
     "@yzfe/darkmodejs": "^1.2.1",
     "core-js": "^3.10.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "form-data": "^4.0.0",
     "http-proxy-middleware": "^1.1.2",
     "javascript-lp-solver": "^0.4.24",
